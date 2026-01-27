@@ -1,356 +1,175 @@
-```md
+# ⚙️ CryptoDash – Market Server (Backend)
 
-\# CryptoDash – Market Server (Backend)
+CryptoDash Server is a Node.js backend that fetches cryptocurrency market data from Binance, stores it in a database, computes technical indicators, and exposes a REST API for visualization clients.
 
-
-
-CryptoDash Server is a Node.js backend responsible for fetching cryptocurrency market data from Binance, storing it in a database, computing technical indicators, and exposing a REST API for client applications.
-
-
-
-The backend follows an indicator-first design: all heavy computations (ATR, Supertrend, etc.) are performed server-side.
-
-
+This server is designed to be **indicator-first**: all heavy calculations (ATR, Supertrend, etc.) are done server-side.
 
 ---
 
+## Features
 
-
-\## Features
-
-
-
-\- Automated OHLCV candle fetching from Binance
-
-\- Incremental candle updates (no full-history refetch)
-
-\- Persistent candle storage by symbol and timeframe
-
-\- ATR (Wilder) calculation
-
-\- Supertrend indicator calculation
-
-\- Cron-based scheduler aligned with candle closes
-
-\- REST API for frontend dashboards and analytics tools
-
-
+- Automated candle fetching from Binance
+- OHLCV data storage (per symbol & timeframe)
+- ATR (Wilder) calculation
+- Supertrend indicator calculation
+- Incremental updates (no refetching full history)
+- Cron-based scheduler aligned with candle closes
+- REST API for frontend dashboards
 
 ---
 
+## Tech Stack
 
-
-\## Tech Stack
-
-
-
-\- Node.js
-
-\- Prisma ORM
-
-\- PostgreSQL (recommended) or SQLite (local testing)
-
-\- Binance REST API
-
-\- node-cron
-
-
+- Node.js
+- Prisma ORM
+- PostgreSQL (or SQLite for local testing)
+- Binance REST API
+- node-cron
 
 ---
 
-
-
-\## Project Structure
-
-
+## Project Structure
 
 ```
-
 src/
-
 ├─ api/
-
 │  └─ candles.js
-
 ├─ services/
-
 │  ├─ binance.js
-
 │  ├─ candleStore.js
-
 │  └─ indicators.js
-
 ├─ cron/
-
 │  └─ scheduler.js
-
 ├─ config/
-
 │  └─ market.js
-
 ├─ prisma/
-
 │  └─ schema.prisma
-
 └─ index.js
-
 ```
-
-
 
 ---
 
+## ⚙️ Setup & Run (Local)
 
-
-\## Setup and Run (Local)
-
-
-
-\### 1. Install dependencies
-
+### 1️⃣ Install dependencies
 ```bash
-
 npm install
-
 ```
-
-
 
 ---
 
+### 2️⃣ Environment variables
 
-
-\### 2. Environment variables
-
-
-
-Create a `.env` file:
-
-
+Create `.env` file:
 
 ```env
-
-DATABASE\_URL=postgresql://user:password@localhost:5432/cryptodash
-
-BINANCE\_API\_KEY=
-
-BINANCE\_API\_SECRET=
-
+DATABASE_URL=postgresql://user:password@localhost:5432/cryptodash
+BINANCE_API_KEY=
+BINANCE_API_SECRET=
 PORT=4000
-
 ```
-
-
 
 ---
 
-
-
-\### 3. Database setup
-
+### 3️⃣ Database setup
 ```bash
-
 npx prisma migrate dev
-
 ```
-
-
 
 ---
 
-
-
-\### 4. Start server
-
+### 4️⃣ Start server
 ```bash
-
 npm run dev
-
 ```
 
-
-
-Server will run at:
-
+Server runs at:
 ```
-
 http://localhost:4000
-
 ```
-
-
 
 ---
 
-
-
-\## Scheduler
-
-
+## Scheduler
 
 The server runs scheduled jobs aligned with Binance candle closes:
 
+- 5m → every 30 seconds (forming candle updates)
+- 15m → every 5 minutes
+- 1h → hourly
+- 4h → every 4 hours
+- 1d → daily
 
-
-\- 5m timeframe: every 30 seconds (forming candle updates)
-
-\- 15m timeframe: every 5 minutes
-
-\- 1h timeframe: hourly
-
-\- 4h timeframe: every 4 hours
-
-\- 1d timeframe: daily
-
-
-
-Each scheduled execution performs the following steps:
-
-1\. Fetch latest candles from Binance
-
-2\. Insert or update candle records
-
-3\. Recalculate ATR
-
-4\. Recalculate Supertrend
-
-
+Each job:
+1. Fetches latest candles
+2. Stores / updates last candle
+3. Recalculates ATR
+4. Recalculates Supertrend
 
 ---
 
+## API Endpoints
 
-
-\## API Endpoints
-
-
-
-\### Get candles
-
+### Get candles
+```
+GET /api/candles?symbol=BTCUSDT&tf=1h&limit=200
 ```
 
-GET /api/candles?symbol=BTCUSDT\&tf=1h\&limit=200
-
-```
-
-
-
-\### Example response
-
+### Response
 ```json
-
 {
-
-&nbsp; "candles": \[
-
-&nbsp;   {
-
-&nbsp;     "openTime": "2024-01-01T00:00:00.000Z",
-
-&nbsp;     "open": 42000,
-
-&nbsp;     "high": 42500,
-
-&nbsp;     "low": 41800,
-
-&nbsp;     "close": 42350,
-
-&nbsp;     "volume": 1234,
-
-&nbsp;     "takerBuyVolume": 650,
-
-&nbsp;     "atr": 320,
-
-&nbsp;     "supertrend": 41750,
-
-&nbsp;     "supertrendDir": 1
-
-&nbsp;   }
-
-&nbsp; ]
-
+  "candles": [
+    {
+      "openTime": "2024-01-01T00:00:00.000Z",
+      "open": 42000,
+      "high": 42500,
+      "low": 41800,
+      "close": 42350,
+      "volume": 1234,
+      "takerBuyVolume": 650,
+      "atr": 320,
+      "supertrend": 41750,
+      "supertrendDir": 1
+    }
+  ]
 }
-
 ```
 
+---
 
+## Indicator Logic
+
+### ATR
+- True Range calculation
+- Wilder smoothing
+- Stored per candle
+
+### Supertrend
+- Uses HL2 ± ATR × multiplier
+- Sticky bands
+- Direction state persisted
+- Stored directly in candle records
 
 ---
 
+## Important Notes
 
-
-\## Indicator Logic
-
-
-
-\### ATR
-
-\- True Range calculation per candle
-
-\- Wilder smoothing method
-
-\- Stored directly on candle records
-
-
-
-\### Supertrend
-
-\- Based on HL2 ± ATR × multiplier
-
-\- Sticky upper and lower bands
-
-\- Direction state persisted between candles
-
-\- Stored per candle in the database
-
-
+- Indicators depend on **historical continuity**
+- Deleting candles may break indicator state
+- Cron jobs should not overlap
+- SQLite is fine for local testing, PostgreSQL recommended for real usage
 
 ---
 
+## Disclaimer
 
-
-\## Important Notes
-
-
-
-\- Indicator calculations rely on historical continuity
-
-\- Deleting candles may break indicator state
-
-\- Cron jobs should not overlap
-
-\- SQLite is suitable for local testing only
-
-\- PostgreSQL is recommended for real usage
-
-
+This project is for **educational and research purposes only**.  
+It is **not financial advice**.
 
 ---
 
-
-
-\## Disclaimer
-
-
-
-This project is for educational and research purposes only.  
-
-It does not constitute financial advice.
-
-
-
----
-
-
-
-\## Author
-
-
+## Author
 
 VanHes1ng  
-
-Crypto market systems and analytics
-
+Crypto systems & market analytics
 ```
-
-
-
