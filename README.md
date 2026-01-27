@@ -1,4 +1,4 @@
-# ⚙️ CryptoDash – Market Server (Backend)
+# CryptoDash – Market Server (Backend)
 
 CryptoDash Server is a Node.js backend that fetches cryptocurrency market data from Binance, stores it in a database, computes technical indicators, and exposes a REST API for visualization clients.
 
