@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Coin {
+  id      Int      @id @default(autoincrement())
+  symbol  String   @unique
+  candles Candle[]
+}
+
+model Candle {
+  id        Int      @id @default(autoincrement())
+  coinId    Int
+  timeframe String
+  openTime  DateTime
+
+  open   Float
+  high   Float
+  low    Float
+  close  Float
+
+  volume         Float
+  trades         Int
+  takerBuyVolume Float
+
+  // 🔹 Indicators (computed on backend)
+  atr             Float?
+  supertrend      Float?
+  supertrendDir   Int?    // 1 = bullish, -1 = bearish
+
+  coin Coin @relation(fields: [coinId], references: [id])
+
+  @@unique([coinId, timeframe, openTime])
+  @@index([coinId, timeframe])
+}
