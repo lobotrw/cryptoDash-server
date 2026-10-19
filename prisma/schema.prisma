@@ -32,6 +32,9 @@ model Candle {
   atr             Float?
   supertrend      Float?
   supertrendDir   Int?    // 1 = bullish, -1 = bearish
+  // Supertrend final bands: the state needed to continue the indicator incrementally
+  stUpper         Float?
+  stLower         Float?
 
   coin Coin @relation(fields: [coinId], references: [id])
 
