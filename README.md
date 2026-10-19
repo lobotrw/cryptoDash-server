@@ -63,11 +63,15 @@ npm install
 Create `.env` file:
 
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/cryptodash
-BINANCE_API_KEY=
-BINANCE_API_SECRET=
+DATABASE_URL=file:./dev.db
 PORT=4000
+# Optional. api.binance.com returns HTTP 451 from restricted regions; use the public
+# market-data mirror instead (no key needed for klines):
+# BINANCE_BASE_URL=https://data-api.binance.vision
 ```
+
+No Binance API key is needed: only the public `/api/v3/klines` endpoint is used.
+The bundled Prisma schema (`prisma/schema.prisma`) uses `provider = "sqlite"`, so `DATABASE_URL` must be a `file:` URL; a `postgresql://` URL fails every query until the provider is changed.
 
 ---
 

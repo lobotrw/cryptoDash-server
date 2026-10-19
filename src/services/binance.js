@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const BINANCE_BASE_URL = "https://api.binance.com";
+// api.binance.com answers HTTP 451 from restricted regions (e.g. the US, parts of the EU
+// hosting providers). Binance's public market-data mirror serves the same /api/v3/klines.
+const BINANCE_BASE_URL =
+  process.env.BINANCE_BASE_URL || "https://api.binance.com";
 
 /**
  * Fetch OHLCV candles from Binance
