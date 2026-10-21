@@ -9,7 +9,7 @@ export async function saveCandles({ symbol, timeframe, candles }) {
   });
 
   // Batch upsert instead of looping
-  const updates = candles.map((c) =>
+  const updates = candles.map(({ closeTime, ...c }) =>
     prisma.candle.upsert({
       where: {
         coinId_timeframe_openTime: {

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "prisma": "prisma"
+    "prisma": "prisma",
+    "test": "node --test test/"
   },
   "keywords": [],
   "author": "",
